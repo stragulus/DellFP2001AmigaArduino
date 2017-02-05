@@ -13,11 +13,13 @@ Earlier revision Dell FP2001 monitors accept a 15kHz signal on their vga input c
 
 Since the Dell FP 2001 is one of the rare monitors that work with this frequency, and I had it gathering dust, I wanted to hook up the Amiga directly. While this works, the horizontal/vertical position was way off as the monitor's auto-calibrate did not work well with this out-of-spec signal. This is correctable manually through the OSD menu though, but it requires a lot of button presses. Additionally, the monitor does not memorize settings, and thus you'd have to do this every time you turn it on. That's a situation that just begs to be automated.
 
+Also, as a software engineer with an interest in electrical engineering, this was a perfect little project to learn new skills.
+
 # Schematics
 
 I used an Arduino Mini Pro that is small enough to be embedded within the monitor itself. The integration is completely invisible, as the arduino siphons its +5V straight from the monitor's main PCB.
 
-Two of the arduino's analog inputs are wired to the monitor's button LCD. Each input reads 2 buttons; Each of the 2 buttons is wired in series with a resistor, and both buttons are wired in parallel. By using different resistor values, the distinction between the buttons can be made. The button/resistor circuitry is part of the monitor's PCB.
+Two of the arduino's analog inputs are wired to the monitor's button circuitry. Each input reads 2 buttons; Each of the 2 buttons is wired in series with a resistor, and both buttons are wired in parallel. By using different resistor values, the distinction between the buttons can be made. The button/resistor circuitry is part of the monitor's PCB.
 
 The arduino's outputs are connected to the monitor's controller that,  before the addition of the arduino, was hooked up to the buttons directly. The outputs are configured as PWM outputs, as they have to simulate an analog network with different voltages, rather than a simple digital one that is either high or low. Since a PWM output is a block signal, it will confuse the monitor, which expects an analog signal with a steady signal at a certain level. To this end, I added a simple RC circuit to the PWM outputs to smoothen the signal. See references for examples.
 
