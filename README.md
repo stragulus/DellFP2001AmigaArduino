@@ -1,5 +1,5 @@
 # DellFP2001AmigaArduino
-This is an arduino project to control a Dell FP 2001 monitor's OSD menu to center its picture for my Amiga 500. This video demonstrates it well: https://www.youtube.com/watch?v=gw1YQZlBUE4
+This is an arduino project to control a Dell FP 2001 monitor's OSD menu to center its picture for my Amiga 500. By pressing a magic button sequence, the monitor will configure itself. [This video demonstrates it perfectly](https://www.youtube.com/watch?v=gw1YQZlBUE4).
 
 # How does it work?
 
