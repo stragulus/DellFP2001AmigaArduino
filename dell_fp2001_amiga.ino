@@ -19,35 +19,36 @@ This only works on an older revision Dell FP2001 (pre-2005?) that allows an Amig
 directly without a scan doubler, as its vga port accepts a 15kHz input signal. Newer versions don't.
 */
 
-//symbols for the 4 OSD menu buttons
+// Symbols for the 4 OSD menu buttons
 #define BTN_INPUT 1 
 #define BTN_MENU 2
 #define BTN_PLUS 3
 #define BTN_MIN 4
 
-//inputs connected to the monitor's buttons
+// Inputs connected to the monitor's buttons. Each input maps to two buttons.
 #define PIN_IN_INPUTMENU A0
 #define PIN_IN_MINPLUS A1
 
-//PWM-modulated output pins connected to the LCD Monitor
-// input & menu buttons
+// PWM-modulated output pins connected to the LCD Monitor's microcontroller.
+// The input & menu buttons
 #define PIN_OUT_INPUTMENU 9
-// min and plus buttons
+// The minus and plus buttons
 #define PIN_OUT_MINPLUS 10
 
-// values to write to PWM-modulated output pins
-  // V measured on original schematics: 
-  // No buttons: 2V, 1 button: 1.66V (83%), other button: 1.12v (56%), both: 0V
-  // output values are manually determined and verified with volt reader to match original
+// Values to write to PWM-modulated output pins
+// V measured on original schematics: 
+// No buttons: 2V, 1 button: 1.66V (83%), other button: 1.12v (56%), both: 0V
+// Output values are manually determined and verified with volt reader to match original
 #define BTNVALOUT_NONE 100
-// 82 / 51 worked for the original Dell 2001FP. A newer 2001FP worked poorly, button 2 worked somewhat, button 1 sporadicallly 80/50
-// soldered everything: 82 is too high, 75 is too low
+// 82 / 51 worked for the original Dell 2001FP. A newer 2001FP worked poorly, button 2 worked somewhat, button 1 sporadicallly.
+// After soldering everything: 82 is too high, 75 is too low
 #define BTNVALOUT_ONE 78
 #define BTNVALOUT_TWO 50
 #define BTNVALOUT_BOTH 0
 
-// delay required to simulate a single button press-and-releast event that is registered as a single button press by the monitor.
-// Tweakable. Too short? It will sometimes miss a press. Too long? It will sometimes register a double press.
+// Delay required to simulate a single button press-and-release event that is registered as a single button press by the monitor.
+// Tweakable. Too short? It will sometimes miss a press. Too long? It will sometimes register a press-and-hold, which will make
+// the OSD menu's cursor advance one position too many.
 // My old 2001FP (built in 2003) wants 150 here, newer 2001FP (2006) wants 165 here
 #define BUTTONPRESS_DELAY 150
 
@@ -114,30 +115,31 @@ void setPwmFrequency(int pin, int divisor) {
   }
 }
 
-// the setup function runs once when you press reset or power the board
+// The setup function runs once when you press reset, or power the board.
 void setup() {
   // initialize digital pin 13 as an output.
-  pinMode(PIN_IN_INPUTMENU, INPUT_PULLUP); //reads buttons + and -
-  pinMode(PIN_IN_MINPLUS, INPUT_PULLUP); //reads buttons + and -
-	// set PWM frequency to the max value
+  pinMode(PIN_IN_INPUTMENU, INPUT_PULLUP); // Reads buttons + and -
+  pinMode(PIN_IN_MINPLUS, INPUT_PULLUP); // Reads buttons + and -
+  // set PWM frequency to the max value
   // XXX this should only be done for pin 9 & 10 as otherwise all delays will be messed up
-	setPwmFrequency(PIN_OUT_INPUTMENU, 1);
-	setPwmFrequency(PIN_OUT_MINPLUS, 1);
+  setPwmFrequency(PIN_OUT_INPUTMENU, 1);
+  setPwmFrequency(PIN_OUT_MINPLUS, 1);
   pinMode(PIN_OUT_INPUTMENU, OUTPUT); // PWM output of button press set 1, connects to a low-pass filter
   pinMode(PIN_OUT_MINPLUS, OUTPUT); // PWM output of button press set 2, connects to a low-pass filter
-  pinMode(13, OUTPUT); // led
+  pinMode(13, OUTPUT); // Arduino onboard LED
   Serial.begin(9600);
   Serial.println("Hello, world!");
   analogWrite(PIN_OUT_INPUTMENU, BTNVALOUT_NONE);
   analogWrite(PIN_OUT_MINPLUS, BTNVALOUT_NONE);
+  // For debugging purposes, flash the onboard LED to indicate successful execution.
   digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(500);              // wait for a second
+  delay(500);
   digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
-  delay(500);              // wait for a second
+  delay(500);
 }
 
 /*
- * Send a registered button press to the monitor's controller.
+ * Send a registered button press combination to the monitor's controller.
  */
 int proxyPin(int pinInput, int pinOutput) {
   int val = analogRead(pinInput);
@@ -169,10 +171,12 @@ int proxyPin(int pinInput, int pinOutput) {
   return button;
 }
 
+// Simulates a button release event.
 void resetPin(int pinOutput) {
   analogWrite(pinOutput, BTNVALOUT_NONE);
 }
 
+// Releases all button presses.
 void resetPins() {
   resetPin(PIN_OUT_INPUTMENU);
   resetPin(PIN_OUT_MINPLUS);
@@ -180,7 +184,7 @@ void resetPins() {
 
 /*
  * Press and hold a button for a given time. Useful when in the OSD menu and you want to set a slider value
- * to the min or max value which is best achieved by holding the button, rather than trying to repeatedly press is.
+ * to the min or max value which is best achieved by holding the button, rather than trying to repeatedly press it.
  */
 void pressButtonWithDelay(unsigned int button, int pressDelay) {
   int pin, value;
@@ -222,6 +226,11 @@ void pressButton(unsigned int button) {
   pressButtonWithDelay(button, BUTTONPRESS_DELAY);
 }
 
+/*
+ * This sends the 'magic sequence' to the monitor to calibrate the screen position for the Amiga 500.
+ * It is assumed that the monitor is not in the OSD menu. It will enter the menu, adjust horizontal and
+ * vertical settings, and finally exit the menu.
+ */
 void setAmigaPreferences() {
   // Sequence of buttons to press:
   // Menu, min, Menu, min, Menu, min, min, min, Menu, min, Menu, plus, menu, plus,plus, menu, menu
@@ -263,7 +272,12 @@ void cycleMenuEndlessly(int button) {
   }
 }
 
-// the loop function runs over and over again forever
+// The main function that controls the arduino's behavior. It will monitor keypresses.
+// If the Plus and Minus buttons are pressed simultaneously, it will execute a magic
+// button sequence to calibrate the screen. For any other button presses, it will pass
+// them on to the monitor's microcontroller as-is, thus enabling the original functionality
+// of the buttons. This works because the monitor did not assign a special function to
+// double button presses, so I could intercept this and assign a function of my own.
 void loop() {
   int buttonSet1Pressed = proxyPin(PIN_IN_INPUTMENU, PIN_OUT_INPUTMENU);
   int buttonSet2Pressed = proxyPin(PIN_IN_MINPLUS, PIN_OUT_MINPLUS);
@@ -285,11 +299,11 @@ void loop() {
   }
   
   if (buttonSet2Pressed == 3) {
-      //plus and min pressed, let's enter the menu!
+      // Plus and minus pressed, let's execute our magic sequence!
       Serial.println("Sequence triggered");
       resetPins();
       delay(2000);
-			setAmigaPreferences();
+      setAmigaPreferences();
       //cycleMenuEndlessly(BTN_PLUS);
   }
 }
