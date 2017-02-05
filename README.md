@@ -15,6 +15,8 @@ Since the Dell FP 2001 is one of the rare monitors that work with this frequency
 
 # Schematics
 
+I used an Arduino Mini Pro that is small enough to be embedded within the monitor itself. The integration is completely invisible, as the arduino siphons its +5V straight from the monitor's main PCB.
+
 Two of the arduino's analog inputs are wired to the monitor's button LCD. Each input reads 2 buttons; Each of the 2 buttons is wired in series with a resistor, and both buttons are wired in parallel. By using different resistor values, the distinction between the buttons can be made. The button/resistor circuitry is part of the monitor's PCB.
 
 The arduino's outputs are connected to the monitor's controller that,  before the addition of the arduino, was hooked up to the buttons directly. The outputs are configured as PWM outputs, as they have to simulate an analog network with different voltages, rather than a simple digital one that is either high or low. Since a PWM output is a block signal, it will confuse the monitor, which expects an analog signal with a steady signal at a certain level. To this end, I added a simple RC circuit to the PWM outputs to smoothen the signal. See references for examples.
