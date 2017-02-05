@@ -3,7 +3,7 @@ This is an arduino project to control a Dell FP 2001 monitor's OSD menu to cente
 
 # How does it work?
 
-In short, the arduino's inputs are hooked up to the monitor's buttons, and its output to the monitor's controller. It thus intercepts button presses, and will either generate its own button presses, or simply passes through the buttons pressed by the user. The code is configured to generate a sequence of button presses once the user presses and holds 2 buttons at the same time. In any other case, it will simply pass the button presses on to the monitor's controller, thus transparently establishing the original behavior.
+In short, the arduino's inputs are hooked up to the monitor's buttons, and its outputs to the monitor's controller. It thus intercepts button presses, and will either generate its own button presses, or simply passes through the buttons pressed by the user. The code is configured to generate a sequence of button presses once the user presses and holds 2 buttons at the same time. In any other case, it will simply pass the button presses on to the monitor's controller, thus transparently establishing the original behavior.
 
 With this trick in place, the double button press kicks off a very specific, hardcoded sequence of button presses. These button presses will bring up the monitor's OSD menu, navigate to horizontal/vertical position settings, and adjust them such that my Amiga 500's display is centered properly. Why?? 
 
